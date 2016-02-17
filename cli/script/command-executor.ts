@@ -1174,11 +1174,31 @@ function promote(command: cli.IPromoteCommand): Promise<void> {
         });
 }
 
+function getAppVersionsStringValue(appVersionList: string): string[] {
+    if (!appVersionList) {
+        return null;
+    }
+
+    var appVersions: string[] = appVersionList.split(",");
+    var list: string[] = appVersions.map((version: string) => {
+        if (version) {
+            return version.trim();
+        }
+    });
+
+    return list;
+}
+
 export var release = (command: cli.IReleaseCommand): Promise<void> => {
     if (isBinaryOrZip(command.package)) {
         throw new Error("It is unnecessary to package releases in a .zip or binary file. Please specify the direct path to the update content's directory (e.g. /platforms/ios/www) or file (e.g. main.jsbundle).");
-    } else if (semver.valid(command.appStoreVersion) === null) {
-        throw new Error("Please use a semver-compliant app store version, for example \"1.0.3\".");
+    } else {
+        var appVersions: string[] = getAppVersionsStringValue(command.appStoreVersion);
+        for (var i = 0; i < appVersions.length; i++) {
+            if (semver.valid(appVersions[i]) === null) {
+                throw new Error("Please use a semver-compliant app store version, for example \"1.0.0\".");
+            }
+        }
     }
 
     return getAppId(command.appName)
@@ -1251,7 +1271,7 @@ export var release = (command: cli.IReleaseCommand): Promise<void> => {
 
                     return getPackageFilePromise
                         .then((file: IPackageFile): Promise<void> => {
-                            return sdk.addPackage(appId, deploymentId, file.path, command.description, /*label*/ null, command.appStoreVersion, command.mandatory, uploadProgress)
+                            return sdk.addPackage(appId, deploymentId, file.path, command.description, /*label*/ null, appVersions, command.mandatory, uploadProgress)
                                 .then((): void => {
                                     log("Successfully released an update containing the \"" + command.package + "\" " + (isSingleFilePackage ? "file" : "directory") + " to the \"" + command.deploymentName + "\" deployment of the \"" + command.appName + "\" app.");
 

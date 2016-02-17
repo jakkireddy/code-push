@@ -36,7 +36,7 @@ export interface CodePushError {
 interface PackageToUpload {
     label: string;
     description: string;
-    appVersion: string;
+    appVersions: string[];
     isMandatory: boolean;
 }
 
@@ -831,9 +831,9 @@ export class AccountManager {
         });
     }
 
-    public addPackage(appId: string, deploymentId: string, fileOrPath: File | string, description: string, label: string, appVersion: string, isMandatory: boolean = false, uploadProgressCallback?: (progress: number) => void): Promise<void> {
+    public addPackage(appId: string, deploymentId: string, fileOrPath: File | string, description: string, label: string, appVersions: string[], isMandatory: boolean = false, uploadProgressCallback?: (progress: number) => void): Promise<void> {
         return Promise<void>((resolve, reject, notify) => {
-            var packageInfo: PackageToUpload = this.generatePackageInfo(description, label, appVersion, isMandatory);
+            var packageInfo: PackageToUpload = this.generatePackageInfo(description, label, appVersions, isMandatory);
             var requester = (this._authedAgent ? this._authedAgent : request);
             var req = requester.put(this.serverUrl + "/apps/" + appId + "/deployments/" + deploymentId + "/package");
             this.attachCredentials(req, requester);
@@ -998,11 +998,11 @@ export class AccountManager {
         return response && response.text ? response.text : error.message;
     }
 
-    private generatePackageInfo(description: string, label: string, appVersion: string, isMandatory: boolean): PackageToUpload {
+    private generatePackageInfo(description: string, label: string, appVersions: string[], isMandatory: boolean): PackageToUpload {
         return {
             description: description,
             label: label,
-            appVersion: appVersion,
+            appVersions: appVersions,
             isMandatory: isMandatory
         };
     }
